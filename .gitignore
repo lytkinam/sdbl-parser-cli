@@ -1,0 +1,21 @@
+# Build outputs
+build/
+.gradle/
+out/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Python cache
+__pycache__/
+*.pyc

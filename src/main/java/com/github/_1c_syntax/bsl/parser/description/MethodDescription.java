@@ -1,0 +1,129 @@
+/*
+ * This file is a part of BSL Parser.
+ *
+ * Copyright (c) 2018-2026
+ * Alexey Sosnoviy <labotamy@gmail.com>, Nikita Fedkin <nixel2007@gmail.com>, Sergey Batanov <sergey.batanov@dmpas.ru>
+ *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
+ *
+ * BSL Parser is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * BSL Parser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BSL Parser.
+ */
+package com.github._1c_syntax.bsl.parser.description;
+
+import com.github._1c_syntax.bsl.parser.description.reader.MethodDescriptionReader;
+import com.github._1c_syntax.bsl.parser.description.support.DescriptionElement;
+import com.github._1c_syntax.bsl.parser.description.support.Hyperlink;
+import com.github._1c_syntax.bsl.parser.description.support.SimpleRange;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Singular;
+import lombok.Value;
+import org.antlr.v4.runtime.Token;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * Класс-описание метода (процедуры или функции).
+ */
+@Value
+@Builder
+public class MethodDescription implements SourceDefinedSymbolDescription {
+
+  /**
+   * Содержит полное описание метода (весь текст).
+   */
+  String description;
+
+  /**
+   * Содержит часть строки после ключевого слова, в которой должно быть
+   * описание причины устаревания метода либо альтернативы.
+   */
+  @Builder.Default
+  String deprecationInfo = "";
+
+  /**
+   * Признак устаревания метода.
+   */
+  boolean deprecated;
+
+  /**
+   * Описание назначения метода.
+   */
+  @Builder.Default
+  String purposeDescription = "";
+
+  /**
+   * Примеры использования метода.
+   */
+  @Builder.Default
+  String examples = "";
+
+  /**
+   * Варианты вызова метода.
+   */
+  @Builder.Default
+  String callOptions = "";
+
+  /**
+   * Параметры метода с типами и описанием.
+   */
+  @Singular
+  List<ParameterDescription> parameters;
+
+  /**
+   * Возвращаемые значения (типы).
+   */
+  @Builder.Default
+  List<TypeDescription> returnedValue = Collections.emptyList();
+
+  /**
+   * Список всех ссылок, которые могут быть в описании.
+   */
+  @Builder.Default
+  List<Hyperlink> links = Collections.emptyList();
+
+  /**
+   * Диапазон, в котором располагается описание.
+   */
+  SimpleRange range;
+
+  /**
+   * Список собственных элементов описания.
+   */
+  @Singular
+  @Getter(AccessLevel.NONE)
+  List<DescriptionElement> keywords;
+
+  /**
+   * Список всех элементов описания включая все дочерние описания (типы, параметры, возвращаемые значения)
+   */
+  @Getter(lazy = true)
+  List<DescriptionElement> elements = computeAllElements();
+
+  public static MethodDescription create(List<Token> comments) {
+    return MethodDescriptionReader.read(comments);
+  }
+
+  private List<DescriptionElement> computeAllElements() {
+    List<DescriptionElement> allElements = new ArrayList<>(Objects.requireNonNull(keywords));
+    Objects.requireNonNull(parameters).forEach(parameter -> allElements.addAll(parameter.allElements()));
+    returnedValue.forEach(type -> allElements.addAll(type.allElements()));
+
+    return Collections.unmodifiableList(allElements);
+  }
+}
