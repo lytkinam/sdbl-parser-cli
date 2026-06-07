@@ -69,6 +69,7 @@ ln -s $(pwd)/sd-cli ~/.local/bin/sd-cli
 - [Руководство администратора](docs/ADMIN_GUIDE.md)
 - [Руководство разработчика](docs/DEV_GUIDE.md)
 - [Руководство winodws](docs/WINDOWS_GUIDE.md)
+- [Известные ошибки работы программы](bugs.md)
 ---
 
 ## Архитектура
