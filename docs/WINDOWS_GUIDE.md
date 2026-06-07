@@ -3,7 +3,7 @@
 ## 1. Требования
 
 - **Java 17+** (JDK)
-- **Git for Windows** (поставляется с Bash — `Git Bash`)
+- Windows 10/11
 
 ## 2. Установка Java
 
@@ -11,9 +11,9 @@
 
 Подробная инструкция со ссылкой для скачивания: [install-java.md](install-java.md)
 
-Быстрая проверка установки в `Git Bash`:
+Проверка установки в `cmd`:
 
-```bash
+```cmd
 java -version
 ```
 
@@ -21,40 +21,44 @@ java -version
 
 ## 3. Установка утилиты
 
-### 3.1. Клонирование репозитория
+### 3.1. Скачивание проекта
 
-Откройте `Git Bash` и выполните:
+Скачайте репозиторий как ZIP и распакуйте, либо клонируйте через Git:
 
-```bash
-cd /c/Users/$USER
+```cmd
+cd C:\Users\%USERNAME%\Desktop
 git clone https://github.com/lytkinam/sdbl-parser-cli.git
-cd sdbl-parser-cli
 ```
 
-### 3.2. Сборка проекта
+### 3.2. Сборка CLI
 
-```bash
-./gradlew classes
+Откройте `cmd`, перейдите в папку проекта и выполните:
+
+```cmd
+cd C:\Users\%USERNAME%\Desktop\sdbl-parser-cli
+gradlew shadowJarCli
 ```
 
-При первом запуске Gradle автоматически скачает дистрибутив. Дождитесь сообщения `BUILD SUCCESSFUL`.
+При первом запуске Gradle скачает дистрибутив (~130 МБ). Дождитесь `BUILD SUCCESSFUL`.
+
+После сборки в папке `build\libs\` появится файл:
+```
+bsl-parser-0.1.0-SNAPSHOT-cli.jar
+```
 
 ### 3.3. Проверка работоспособности
 
-```bash
-bash sdql-cli --help
+```cmd
+sd-cli.bat --help
 ```
 
-Для удобства создайте псевдоним `sd-cli`:
+Должен отобразиться список команд.
 
-```bash
-cp sdql-cli sd-cli
-bash sd-cli --help
-```
+---
 
 ## 4. Важная особенность Windows — используйте абсолютные пути
 
-**Критический баг:** при указании относительного пути (`./out` или `out`) часть артефактов (`field_lineage`, `full_field_lineage`, `RESTORED_QUERIES`, `VERIFICATION`) создаётся **в текущей директории проекта** вместо целевой папки.
+**Критический баг:** при указании относительного пути (`out`, `.\out`, `./out`) часть артефактов (`field_lineage`, `full_field_lineage`, `RESTORED_QUERIES`, `VERIFICATION`) создаётся **в текущей директории** (корне проекта) вместо целевой папки.
 
 **Последствия:**
 - Команда `restore-query` возвращает пустую строку.
@@ -62,29 +66,29 @@ bash sd-cli --help
 
 **Решение:** всегда передавайте `--output-dir` как **абсолютный путь**.
 
-Вариант 1 — через `$(pwd)` (автоматически подставит текущую директорию):
-```bash
-bash sd-cli analyze --sql-file query.sql --output-dir "$(pwd)/out" --base-name myquery
+---
+
+## 5. Пошаговый пример работы через cmd
+
+### 5.1. Структура папок (разделение данных и проекта)
+
+Рекомендуется хранить проект, запросы и результаты раздельно:
+
+```
+C:\Users\User\Desktop\sdbl-parser-cli\     ← проект (содержит sd-cli.bat)
+C:\Users\User\Documents\sdql-queries\     ← SQL-файлы для анализа
+C:\Users\User\Documents\sdql-results\     ← результаты анализа
 ```
 
-Вариант 2 — явный абсолютный путь с диском `C:`:
-```bash
-bash sd-cli analyze --sql-file query.sql --output-dir "/c/Users/$USER/sdbl-parser-cli/out" --base-name myquery
+### 5.2. Подготовка SQL-файла
+
+Скопируйте пример из проекта или создайте свой файл:
+
+```cmd
+copy "C:\Users\%USERNAME%\Desktop\sdbl-parser-cli\examples\receipt_query.sql" "C:\Users\%USERNAME%\Documents\sdql-queries\"
 ```
 
-> В `Git Bash` диск `C:` пишется как `/c/`. Если используете обычный `cmd.exe` — путь будет `C:\Users\...`, но скрипт `sd-cli` рассчитан на Bash, поэтому рекомендуется `Git Bash`.
-
-## 5. Пошаговый пример работы
-
-### 5.1. Подготовка SQL-файла
-
-В проекте уже есть пример:
-
-```bash
-cat examples/receipt_query.sql
-```
-
-**Содержимое файла `examples/receipt_query.sql`:**
+**Содержимое `receipt_query.sql`:**
 ```sql
 ВЫБРАТЬ
     ПоступлениеТоваров.Ссылка КАК Документ,
@@ -96,86 +100,112 @@ cat examples/receipt_query.sql
     ПО ПоступлениеТоваров.Ссылка = ПоступлениеТоваровУслуг.ссылка
 ```
 
-### 5.2. Запуск анализа
+### 5.3. Запуск анализа (абсолютные пути)
+
+```cmd
+cd C:\Users\%USERNAME%\Desktop\sdbl-parser-cli
+
+sd-cli.bat analyze ^
+  --sql-file C:\Users\%USERNAME%\Documents\sdql-queries\receipt_query.sql ^
+  --output-dir C:\Users\%USERNAME%\Documents\sdql-results ^
+  --base-name receipt
+```
+
+> Символ `^` в `cmd` — это перенос строки. Можно писать и в одну строку.
+
+### 5.4. Запуск анализа (относительные пути — только если папка рядом)
+
+Если запросы и результаты лежат в соседних папках:
+
+```cmd
+cd C:\Users\%USERNAME%\Desktop\sdbl-parser-cli
+
+sd-cli.bat analyze ^
+  --sql-file ..\..\Documents\sdql-queries\receipt_query.sql ^
+  --output-dir C:\Users\%USERNAME%\Documents\sdql-results ^
+  --base-name receipt
+```
+
+> **Важно:** `--output-dir` должен быть абсолютным! `--sql-file` может быть относительным.
+
+### 5.5. Проверка созданных файлов
+
+```cmd
+dir "C:\Users\%USERNAME%\Documents\sdql-results" /s /b
+```
+
+**Ожидаемый список:**
+```
+C:\Users\User\Documents\sdql-results\SDBL_PARS\sdbl_parse_model_receipt.json
+C:\Users\User\Documents\sdql-results\LINE_PARS\LINE_PARS_model_receipt.json
+C:\Users\User\Documents\sdql-results\LINE_PARS\LINE_PARS_hierarchy_receipt.json
+C:\Users\User\Documents\sdql-results\FULL_PARS\FULL_PARS_model_receipt.json
+C:\Users\User\Documents\sdql-results\field_lineage\receipt\...
+C:\Users\User\Documents\sdql-results\full_field_lineage\receipt\...
+C:\Users\User\Documents\sdql-results\RESTORED_QUERIES\receipt\...
+C:\Users\User\Documents\sdql-results\VERIFICATION\receipt\...
+```
+
+### 5.6. Другие команды
+
+**Список узлов:**
+```cmd
+sd-cli.bat list-nodes ^
+  --artifacts-dir C:\Users\%USERNAME%\Documents\sdql-results ^
+  --base-name receipt
+```
+
+**Иерархия:**
+```cmd
+sd-cli.bat hierarchy ^
+  --artifacts-dir C:\Users\%USERNAME%\Documents\sdql-results ^
+  --base-name receipt
+```
+
+**Lineage поля:**
+```cmd
+sd-cli.bat field-lineage ^
+  --artifacts-dir C:\Users\%USERNAME%\Documents\sdql-results ^
+  --base-name receipt --node-id 0 --alias "Номенклатура"
+```
+
+**Полный lineage:**
+```cmd
+sd-cli.bat full-field-lineage ^
+  --artifacts-dir C:\Users\%USERNAME%\Documents\sdql-results ^
+  --base-name receipt --node-id 0 --aliases "Документ,Номенклатура,Количество"
+```
+
+**Восстановление SQL:**
+```cmd
+sd-cli.bat restore-query ^
+  --artifacts-dir C:\Users\%USERNAME%\Documents\sdql-results ^
+  --base-name receipt --node-id 0 --aliases "Документ,Номенклатура,Количество"
+```
+
+---
+
+## 6. Готовый файл для запуска
+
+В корне проекта лежит `sd-cli.bat`. Его можно:
+- Запускать из папки проекта (как показано выше)
+- Добавить путь к папке проекта в переменную среды `PATH` — тогда `sd-cli.bat` будет доступен из любой папки
+- Скопировать на рабочий стол и править пути под свои задачи
+
+---
+
+## 7. Альтернатива — Git Bash
+
+Если установлен Git for Windows, можно работать через `Git Bash`:
 
 ```bash
-# Автоматический абсолютный путь
-OUTDIR="$(pwd)/out"
-bash sd-cli analyze --sql-file examples/receipt_query.sql --output-dir "$OUTDIR" --base-name receipt
-
-# Или явный путь с диском C:
-# OUTDIR="/c/Users/$USER/sdbl-parser-cli/out"
-# bash sd-cli analyze --sql-file examples/receipt_query.sql --output-dir "$OUTDIR" --base-name receipt
+cd /c/Users/$USER/Desktop/sdbl-parser-cli
+bash sd-cli analyze --sql-file /c/Users/$USER/Documents/sdql-queries/receipt_query.sql --output-dir /c/Users/$USER/Documents/sdql-results --base-name receipt
 ```
 
-**Ожидаемый результат:** JSON с путями к созданным файлам.
+---
 
-### 5.3. Проверка созданных файлов
-
-```bash
-find "$OUTDIR" -type f | sort
-```
-
-**Ожидаемый список файлов:**
-```
-/c/Users/.../sdbl-parser-cli/out/SDBL_PARS/sdbl_parse_model_receipt.json
-/c/Users/.../sdbl-parser-cli/out/LINE_PARS/LINE_PARS_model_receipt.json
-/c/Users/.../sdbl-parser-cli/out/LINE_PARS/LINE_PARS_hierarchy_receipt.json
-/c/Users/.../sdbl-parser-cli/out/FULL_PARS/FULL_PARS_model_receipt.json
-/c/Users/.../sdbl-parser-cli/out/field_lineage/receipt/0_Результат_1/FLS_receipt_0_Результат_1_Документ.json
-/c/Users/.../sdbl-parser-cli/out/field_lineage/receipt/0_Результат_1/FLS_receipt_0_Результат_1_Количество.json
-/c/Users/.../sdbl-parser-cli/out/field_lineage/receipt/0_Результат_1/FLS_receipt_0_Результат_1_Номенклатура.json
-/c/Users/.../sdbl-parser-cli/out/full_field_lineage/receipt/0_Результат_1/FFL_receipt_0_Результат_1_Документ.json
-/c/Users/.../sdbl-parser-cli/out/full_field_lineage/receipt/0_Результат_1/FFL_receipt_0_Результат_1_Количество.json
-/c/Users/.../sdbl-parser-cli/out/full_field_lineage/receipt/0_Результат_1/FFL_receipt_0_Результат_1_Номенклатура.json
-/c/Users/.../sdbl-parser-cli/out/RESTORED_QUERIES/receipt/0_Результат_1/Документ.sql
-/c/Users/.../sdbl-parser-cli/out/RESTORED_QUERIES/receipt/0_Результат_1/Количество.sql
-/c/Users/.../sdbl-parser-cli/out/RESTORED_QUERIES/receipt/0_Результат_1/Номенклатура.sql
-/c/Users/.../sdbl-parser-cli/out/VERIFICATION/receipt/verification_report.json
-```
-
-### 5.4. Просмотр результатов
-
-**Иерархия таблиц:**
-```bash
-bash sd-cli hierarchy --artifacts-dir "$OUTDIR" --base-name receipt
-cat "$OUTDIR/LINE_PARS/LINE_PARS_hierarchy_receipt.json"
-```
-
-**SDBL-модель (AST):**
-```bash
-cat "$OUTDIR/SDBL_PARS/sdbl_parse_model_receipt.json"
-```
-
-**FULL_PARS модель (lineage полей):**
-```bash
-cat "$OUTDIR/FULL_PARS/FULL_PARS_model_receipt.json"
-```
-
-**Восстановленный SQL для поля «Номенклатура»:**
-```bash
-cat "$OUTDIR/RESTORED_QUERIES/receipt/0_Результат_1/Номенклатура.sql"
-```
-
-**Lineage конкретного поля через CLI:**
-```bash
-bash sd-cli field-lineage --artifacts-dir "$OUTDIR" --base-name receipt \
-  --node-id 0 --alias "Номенклатура"
-```
-
-**Полный lineage для набора полей:**
-```bash
-bash sd-cli full-field-lineage --artifacts-dir "$OUTDIR" --base-name receipt \
-  --node-id 0 --aliases "Документ,Номенклатура,Количество"
-```
-
-### 5.5. Список узлов запроса
-
-```bash
-bash sd-cli list-nodes --artifacts-dir "$OUTDIR" --base-name receipt
-```
-
-## 6. Справочник команд
+## 8. Справочник команд
 
 | Команда | Описание |
 |---------|----------|
@@ -190,22 +220,19 @@ bash sd-cli list-nodes --artifacts-dir "$OUTDIR" --base-name receipt
 | `list-nodes` | Список узлов запроса |
 | `verify` | Отчёт верификации |
 
-## 7. Интеграционный режим (stdin → stdout)
+---
 
-Для встраивания в другие инструменты (например, AI-ассистенты):
+## 9. Известные проблемы
 
-```bash
-echo '{"command":"analyze","args":{"sqlText":"ВЫБРАТЬ 1 КАК А"}}' | bash sd-cli
-```
+Полный список багов и обходных решений: [bugs.md](../bugs.md)
 
-## 8. Известные проблемы и решения
+Кратко:
+- **Абсолютные пути обязательны** для `--output-dir`
+- **Кракозябры в консоли** — JSON-файлы корректны, читайте их
+- **`restore-query` пустой** — проверьте, что `analyze` запускался с абсолютным путём
 
-| Проблема | Причина | Решение |
-|----------|---------|---------|
-| Файлы `field_lineage`, `RESTORED_QUERIES` и др. создаются в корне проекта | Баг с `Path.getParent()` для относительных путей | Всегда указывать `--output-dir "$(pwd)/папка"` |
-| `restore-query` возвращает пустую строку | Не найдена `full_field_lineage` по ожидаемому пути | Использовать абсолютный путь при `analyze` |
-| Кракозябры в консоли Git Bash | Несовпадение кодировок терминала | JSON-файлы артефактов сохраняются в корректной UTF-8 — читайте их через `cat` |
+---
 
-## 9. Лицензия
+## 10. Лицензия
 
 LGPL-3.0
