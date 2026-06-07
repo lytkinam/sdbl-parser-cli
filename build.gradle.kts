@@ -361,3 +361,14 @@ tasks.shadowJar {
         attributes["Main-Class"] = "com.github._1c_syntax.bsl.parser.sdql.mcp.SdqlMcpServer"
     }
 }
+
+tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJarCli") {
+    group = "build"
+    archiveClassifier.set("cli")
+    from(sourceSets.main.get().output)
+    configurations = listOf(project.configurations.runtimeClasspath.get())
+    mergeServiceFiles()
+    manifest {
+        attributes["Main-Class"] = "com.github._1c_syntax.bsl.parser.sdql.cli.SdqlCli"
+    }
+}
