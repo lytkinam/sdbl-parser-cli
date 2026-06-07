@@ -60,15 +60,19 @@ bash sd-cli --help
 - Команда `restore-query` возвращает пустую строку.
 - Файлы разбрасываются по корню проекта.
 
-**Решение:** всегда передавайте `--output-dir` как **абсолютный путь** через `$(pwd)`:
+**Решение:** всегда передавайте `--output-dir` как **абсолютный путь**.
 
+Вариант 1 — через `$(pwd)` (автоматически подставит текущую директорию):
 ```bash
-# ❌ Неправильно — файлы разбросаются
-bash sd-cli analyze --sql-file query.sql --output-dir ./out --base-name myquery
-
-# ✅ Правильно — всё в одной папке
 bash sd-cli analyze --sql-file query.sql --output-dir "$(pwd)/out" --base-name myquery
 ```
+
+Вариант 2 — явный абсолютный путь с диском `C:`:
+```bash
+bash sd-cli analyze --sql-file query.sql --output-dir "/c/Users/$USER/sdbl-parser-cli/out" --base-name myquery
+```
+
+> В `Git Bash` диск `C:` пишется как `/c/`. Если используете обычный `cmd.exe` — путь будет `C:\Users\...`, но скрипт `sd-cli` рассчитан на Bash, поэтому рекомендуется `Git Bash`.
 
 ## 5. Пошаговый пример работы
 
@@ -95,8 +99,13 @@ cat examples/receipt_query.sql
 ### 5.2. Запуск анализа
 
 ```bash
+# Автоматический абсолютный путь
 OUTDIR="$(pwd)/out"
 bash sd-cli analyze --sql-file examples/receipt_query.sql --output-dir "$OUTDIR" --base-name receipt
+
+# Или явный путь с диском C:
+# OUTDIR="/c/Users/$USER/sdbl-parser-cli/out"
+# bash sd-cli analyze --sql-file examples/receipt_query.sql --output-dir "$OUTDIR" --base-name receipt
 ```
 
 **Ожидаемый результат:** JSON с путями к созданным файлам.

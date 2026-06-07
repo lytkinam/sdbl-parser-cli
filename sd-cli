@@ -1,0 +1,33 @@
+#!/bin/bash
+# SDQL CLI wrapper script
+# Usage: sdql-cli [COMMAND] [OPTIONS]
+# Refs BRD10 / SRS10
+
+set -e
+
+# Resolve script location (works with symlinks)
+SCRIPT_SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SCRIPT_SOURCE" ]; do
+    SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+    SCRIPT_SOURCE="$(readlink "$SCRIPT_SOURCE")"
+    [[ $SCRIPT_SOURCE != /* ]] && SCRIPT_SOURCE="$SCRIPT_DIR/$SCRIPT_SOURCE"
+done
+PROJECT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+BUILD_DIR="$PROJECT_DIR/build"
+
+# Check if classes are compiled
+if [ ! -d "$BUILD_DIR/classes/java/main" ]; then
+    echo "[ERROR] Project not compiled. Run: cd $PROJECT_DIR && ./gradlew classes" >&2
+    exit 1
+fi
+
+# Build classpath
+CP="$BUILD_DIR/classes/java/main:$BUILD_DIR/resources/main"
+
+# Add Gradle cached jars
+for jar in $(find "$HOME/.gradle/caches" -name "antlr4-runtime-4.13.1.jar" -o -name "jackson-databind-2.17.2.jar" -o -name "jackson-core-2.17.2.jar" -o -name "jackson-annotations-2.17.2.jar" -o -name "lombok-*.jar" -o -name "slf4j-api-*.jar" -o -name "slf4j-simple-*.jar" 2>/dev/null); do
+    CP="$CP:$jar"
+done
+
+# Run CLI
+exec java -cp "$CP" com.github._1c_syntax.bsl.parser.sdql.cli.SdqlCli "$@"
