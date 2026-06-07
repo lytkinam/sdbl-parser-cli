@@ -1,0 +1,2 @@
+# Treat JAR files as binary — do not attempt text diff
+*.jar binary

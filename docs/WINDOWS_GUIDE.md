@@ -30,9 +30,14 @@ cd C:\Users\%USERNAME%\Desktop
 git clone https://github.com/lytkinam/sdbl-parser-cli.git
 ```
 
-### 3.2. Сборка CLI
+### 3.2. Готовый JAR (рекомендуется)
 
-Откройте `cmd`, перейдите в папку проекта и выполните:
+В папке `release\` уже лежит собранный fat JAR:
+```
+release\sd-cli.jar
+```
+
+Если хотите пересобрать самостоятельно:
 
 ```cmd
 cd C:\Users\%USERNAME%\Desktop\sdbl-parser-cli
@@ -40,11 +45,6 @@ gradlew shadowJarCli
 ```
 
 При первом запуске Gradle скачает дистрибутив (~130 МБ). Дождитесь `BUILD SUCCESSFUL`.
-
-После сборки в папке `build\libs\` появится файл:
-```
-bsl-parser-0.1.0-SNAPSHOT-cli.jar
-```
 
 ### 3.3. Проверка работоспособности
 
@@ -185,12 +185,33 @@ sd-cli.bat restore-query ^
 
 ---
 
-## 6. Готовый файл для запуска
+## 6. Готовые файлы для запуска
 
-В корне проекта лежит `sd-cli.bat`. Его можно:
-- Запускать из папки проекта (как показано выше)
-- Добавить путь к папке проекта в переменную среды `PATH` — тогда `sd-cli.bat` будет доступен из любой папки
-- Скопировать на рабочий стол и править пути под свои задачи
+В проекте уже есть всё необходимое:
+
+| Файл | Назначение |
+|---|---|
+| `release\sd-cli.jar` | Собранный fat JAR (25 МБ) со всеми зависимостями |
+| `sd-cli.bat` | Windows-запускатор. Ищет JAR сначала в `release\`, затем в `build\libs\` |
+
+### Как использовать
+
+**Вариант 1 — из папки проекта:**
+```cmd
+cd C:\Users\%USERNAME%\Desktop\sdbl-parser-cli
+sd-cli.bat --help
+```
+
+**Вариант 2 — добавить в PATH:**
+1. Откройте «Переменные среды» (`sysdm.cpl`)
+2. В `PATH` добавьте: `C:\Users\%USERNAME%\Desktop\sdbl-parser-cli`
+3. Теперь `sd-cli.bat` работает из любой папки:
+```cmd
+sd-cli.bat analyze --sql-file C:\Users\%USERNAME%\Documents\sdql-queries\query.sql --output-dir C:\Users\%USERNAME%\Documents\sdql-results --base-name myquery
+```
+
+**Вариант 3 — скопировать на рабочий стол:**
+Скопируйте `sd-cli.bat` и `release\sd-cli.jar` в одну папку (например, рабочий стол) и запускайте оттуда.
 
 ---
 
